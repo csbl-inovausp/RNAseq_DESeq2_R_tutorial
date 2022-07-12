@@ -11,16 +11,16 @@ output:
 
 Tutorial de análise de expressão gênica diferencial utilizando o pacote **DESeq2** no R/RStudio preparado para a disciplina **ICB5747 - Ciências Ômicas em Doenças Infecciosas**.
 
-
 # Chamada de pacotes e configurações básicas do R
-***
+
+------------------------------------------------------------------------
 
 Para começar, precisamos carregar os pacotes necessários para a nossa análise, que além do próprio DESeq2, incluem pacotes para manipulação de dados e acesso à banco de dados com informações biológicas.
 
 ```{r, echo=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(webshot)
-webshot::install_phantomjs() # Ana, precisamos passar essa linha de código pro Carlos incluir no tutorial prévio, pois é necessário instalar esse pacote "webshot" e rodar essa linha de código aí pra visualizar páginas web no markdown
+#webshot::install_phantomjs() # Ana, precisamos passar essa linha de código pro Carlos incluir no tutorial prévio, pois é necessário instalar esse pacote "webshot" e rodar essa linha de código aí pra visualizar páginas web no markdown
 ```
 
 ```{r, message=FALSE}
@@ -35,13 +35,13 @@ options(stringsAsFactors = F)
 
 # Um pouco sobre os dados que vamos analisar
 
-* * *
+------------------------------------------------------------------------
 
 O número de acesso para o estudo que usaremos como exemplo é o GSE52778 (Gene Expression Omnibus database - GEO), *Human Airway Smooth Muscle Transcriptome Changes in Response to Asthma Medications*. O experimento inclui 4 linhagens celulares diferentes que foram tratadas com o medicamento dexametasona durante 18 horas. Esse medicamento é usado por pacientes com asma para reduzir a inflamação nas vias aéreas. Para cada linhagem celular, o experimento contém uma amostra tratada e uma amostra não tratada (controle). O objetivo é entender as mudanças transcricionais que ocorrem durante o tratamento com dexametasona.
 
 # Carregando as tabelas necessárias
 
-* * *
+------------------------------------------------------------------------
 
 Agora vamos carregar as tabelas de contagem de genes e a tabela que contém a informação sobre as amostras (phenodata). Vamos converter também a coluna que indica o tratamento por dexametasona em fatores para indicar a ordem correta dos grupos (controle primeiro, tratado depois).
 
@@ -58,7 +58,7 @@ head(pheno_data)
 
 # Criando o objeto dds para DESeq2
 
-* * *
+------------------------------------------------------------------------
 
 O próximo passo será criar o objeto dds, específico para as análises utilizando o DESeq2. Esse objeto irá conter a tabela de expressão, o phenodata e a indicação do design do experimento (tratado versus controle, por exemplo).
 
@@ -72,7 +72,7 @@ dds
 
 ## Filtrando os genes pouco expressos
 
-A nossa tabela de contagem contem muitas linhas (genes) em que não há contagem de reads em nenhuma amostra e também genes em que a média de contagens nas amostras é muito baixa. É desejável filtrar esses genes com contagem zero ou muito baixa para aumentar a velocidade do processamento e também para evitar resultados que não apresentam validade. Primeiro vamos filtrar as linhas com contagem zero em todas as colunas. 
+A nossa tabela de contagem contem muitas linhas (genes) em que não há contagem de reads em nenhuma amostra e também genes em que a média de contagens nas amostras é muito baixa. É desejável filtrar esses genes com contagem zero ou muito baixa para aumentar a velocidade do processamento e também para evitar resultados que não apresentam validade. Primeiro vamos filtrar as linhas com contagem zero em todas as colunas.
 
 ```{r}
 nrow(dds)
@@ -103,7 +103,7 @@ DESeq2::plotPCA(vsd, intgroup = "dexametasona")
 
 # Executando a análise de expressão diferencial (DESeq2)
 
-* * *
+------------------------------------------------------------------------
 
 Vimos que as amostras controle e tratadas estão bem separadas umas das outras e mais próximas entre si. Podemos seguir adiante para a análise de expressão gênica diferencial entre os grupos. A função usada para essa análise é bem simples:
 
@@ -149,7 +149,7 @@ DESeq2::summary(res.05)
 
 # Visualizando os resultados
 
-* * *
+------------------------------------------------------------------------
 
 Vamos utilizar o pacote ggplot2 para criar o volcano plot (gráfico de vulcão). Nesse gráfico, o eixo x representa o valor de log2FoldChange, que como visto durante o curso, representa o tamanho do efeito da expressão diferencial. Valores positivos de log2FoldChange representam genes cuja expressão está aumentada no grupo tratado em relação ao grupo controle, enquanto valores de log2FoldChange negativo representam o contrário, genes cuja expressão no grupo tratado é menor que a expressão no grupo controle. Além do filtro de p-adjusted \< 0.05, vamos também criar um filtro de log2FoldChange. Apenas genes com p-adjusted \< 0.05 e log2FoldChange maior que 1 ou menor que -1. Esses valores de log2FoldChange representam uma diferença entre tratado e controle que significa que o tratado tem o dobro da expressão do controle (log2FC = 1) ou que o tratado tem a metade da expressão do control (log2FC = -1).
 
@@ -164,7 +164,7 @@ res_df[1:50,]
 
 ## Plotando o volcano plot
 
-Agora, vamos criar uma coluna no dataframe indicando se cada gene é significativo (padj < 0.05 & |logFC| > 1) - positivo ou negativo. Já vamos também definir a cor de cada gene pro volcano plot: azul, significativo e negativo, vermelho, significativo e positivo e cinza, não significativo, independente da direção.
+Agora, vamos criar uma coluna no dataframe indicando se cada gene é significativo (padj \< 0.05 & \|logFC\| \> 1) - positivo ou negativo. Já vamos também definir a cor de cada gene pro volcano plot: azul, significativo e negativo, vermelho, significativo e positivo e cinza, não significativo, independente da direção.
 
 ```{r}
 plot_df <- res_df %>%
@@ -237,7 +237,7 @@ res_convert[1:10,]
 
 # Interpretando os resultados
 
-* * *
+------------------------------------------------------------------------
 
 ## Analisando os top 20 genes up e down
 
@@ -245,15 +245,28 @@ Com os nomes de genes convertidos, vamos agora dar uma olhada nos top genes dife
 
 ```{r}
 top_up <- res_convert %>%
-        dplyr::top_n(n = 20,wt = log2FoldChange)
+  dplyr::filter(external_gene_name != "",
+                !is.na(external_gene_name)) %>%
+  dplyr::top_n(n = 20,wt = log2FoldChange)
 top_up
 ```
 
 ```{r}
 top_down <- res_convert %>%
-        dplyr::top_n(n = 20,wt = -log2FoldChange)
+  dplyr::filter(external_gene_name != "",
+                !is.na(external_gene_name)) %>%
+  dplyr::top_n(n = 20,wt = -log2FoldChange)
 top_down
 ```
+
+Vamos também salvar tabelas fora do R com os top DEGs up e down.
+
+```{r}
+write.csv(x = top_up,file = "data/top_up.csv",row.names = F,quote = F)
+
+write.csv(x = top_down,file = "data/top_down.csv",row.names = F,quote = F)
+```
+
 
 ## Buscando informações sobre top DEGs no Google
 
@@ -276,3 +289,7 @@ knitr::include_url("https://www.genecards.org/cgi-bin/carddisp.pl?gene=CYP24A1")
 ```
 
 Veja que esse é um gene que codifica uma enzima envolvida no metabolismo de drogas, mas também na síntese de esteróides. A droga utilizada no experimento que estamos analisando, a dexametasona, é um esteróide sintético. Portanto, faz sentido que células tratadas com uma substância esteróide passem a expressar menor quantidade dos genes que estão envolvidos na produção dessas moléculas. Provavelmente trata-se de um mecanismo de feedback negativo devido ao tratamento. Podemos investigar essa hipótese mais a fundo olhando para outros genes relacionados à via de síntese de esteróides nos nosso resultados.
+
+## Enriquecimento funcional utilizando o EnrichR
+
+Agora que já obtivemos a lista de DEGs completa, podemos fazer análise de enriquecimento funcional usando a plataforma [enrichR](https://maayanlab.cloud/Enrichr/). Vamos acessar a tabela de top DEGs up e down, utilizando o Excel ou outro editor de planilhas e seguir os mesmos passos que fizemos ontem na aula teórica.
