@@ -129,6 +129,21 @@ genes_down <- rownames(df_down)
 ora_up <- fgsea::fora(pathways = reactome_fgsea,genes = genes_up,
                       universe = universo)
 
+ora_up$dir <- "up"
+
 ora_down <- fgsea::fora(pathways = reactome_fgsea,genes = genes_down,
                       universe = universo)
 
+ora_down$dir <- "down"
+
+plot_enr_df <- rbind(ora_up,ora_down)
+
+p <- plot_enr_df %>%
+  filter(padj < 0.1) %>%
+  arrange(-log(padj)) %>%
+  mutate(pathway=factor(pathway,levels = unique(pathway))) %>%
+  ggplot(aes(x = dir,y = pathway))+
+  geom_point(aes(size=-log(pval),color=dir))+
+  scale_color_manual(values = c("blue","red3"))+
+  theme_bw()
+p
