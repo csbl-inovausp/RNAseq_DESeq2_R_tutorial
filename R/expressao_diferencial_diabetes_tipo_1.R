@@ -6,6 +6,7 @@
 #Chamada de pacotes
 library(dplyr)
 library(DESeq2)
+library(ggplot2)
 
 #Definir pasta de trabalho
 setwd("/Users/Usuario/Desktop/Curso ciências ômicas/")
@@ -72,7 +73,62 @@ pheatmap(sampleDistMatrix,
          col = colors)
 
 #Rodar análise de expressão diferencial
+dds_de <- DESeq2::DESeq(dds_filtrado_final)
+
+res <- DESeq2::results(dds_de)
+
+DESeq2::summary(res)
+
+res.05 <- results(dds_de, alpha = 0.05)
+DESeq2::summary(res.05)
+
+#Plotar resultados em volcano plot
+res_df <- as.data.frame(res)
+
+plot_df <- res_df %>%
+  mutate(significativo=ifelse(padj<0.05 & abs(log2FoldChange) > 1,
+                              yes = "sim",
+                              no = "não"),
+         dir=ifelse(log2FoldChange>0,yes = "positivo",no = "negativo"),
+         DE=ifelse(significativo=="sim" & dir=="positivo",
+                   yes = "positivo",
+                   no = ifelse(significativo=="sim" & dir=="negativo",
+                               yes = "negativo",
+                               no = "não significativo")),
+         DE=factor(DE, levels = c("negativo","não significativo","positivo")))
 
 
+plot <- plot_df %>%
+  ggplot(aes(x=log2FoldChange,y = -log(padj))) +
+  geom_point(aes(color=DE)) +
+  scale_color_manual(values = c("blue","grey","red3")) +
+  geom_hline(yintercept = -log(0.05),linetype="dashed") +
+  geom_vline(xintercept = c(-1,1),linetype="dashed") +
+  theme_bw()
+plot
 
+#Análise enriquecimento funcional
+library(fgsea)
+reactome_df <- readRDS("RNAseq_DESeq2_R_tutorial/data/all_level_reactome.RDS")
+
+reactome_fgsea <- split(reactome_df$gene,
+                        reactome_df$ont)
+
+universo <- unique(c(count_data$Title,reactome_df$gene))
+
+df_up <- plot_df %>%
+  filter(DE=="positivo")
+
+genes_up <- rownames(df_up)
+
+df_down <- plot_df %>%
+  filter(DE=="negativo")
+
+genes_down <- rownames(df_down)
+
+ora_up <- fgsea::fora(pathways = reactome_fgsea,genes = genes_up,
+                      universe = universo)
+
+ora_down <- fgsea::fora(pathways = reactome_fgsea,genes = genes_down,
+                      universe = universo)
 
