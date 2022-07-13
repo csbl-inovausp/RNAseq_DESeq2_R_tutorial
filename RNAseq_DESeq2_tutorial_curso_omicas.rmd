@@ -17,13 +17,13 @@ Tutorial de análise de expressão gênica diferencial utilizando o pacote **DES
 
 Para começar, precisamos carregar os pacotes necessários para a nossa análise, que além do próprio DESeq2, incluem pacotes para manipulação de dados e acesso à banco de dados com informações biológicas.
 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(webshot)
 #webshot::install_phantomjs() # Ana, precisamos passar essa linha de código pro Carlos incluir no tutorial prévio, pois é necessário instalar esse pacote "webshot" e rodar essa linha de código aí pra visualizar páginas web no markdown
 ```
 
-```{r, message=FALSE}
+```{r, message=FALSE, warning=FALSE}
 library(DESeq2)
 library(data.table)
 library(dplyr)
@@ -46,12 +46,12 @@ O número de acesso para o estudo que usaremos como exemplo é o GSE52778 (Gene 
 Agora vamos carregar as tabelas de contagem de genes e a tabela que contém a informação sobre as amostras (phenodata). Vamos converter também a coluna que indica o tratamento por dexametasona em fatores para indicar a ordem correta dos grupos (controle primeiro, tratado depois).
 
 ```{r}
-count_data <- read.csv(file = "data/counts_data.csv",header = T)
+count_data <- read.csv(file = "https://github.com/csbl-inovausp/RNAseq_DESeq2_R_tutorial/raw/main/data/counts_data.csv", header = T)
 head(count_data)
 ```
 
 ```{r}
-pheno_data <- read.csv(file = "data/sample_info.csv",header = T,row.names = 1)
+pheno_data <- read.csv(file = "https://github.com/csbl-inovausp/RNAseq_DESeq2_R_tutorial/raw/main/data/sample_info.csv", header = T)
 pheno_data$dexametasona <- factor(pheno_data$dexametasona,levels = c("controle","tratado"))
 head(pheno_data)
 ```
